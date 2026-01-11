@@ -107,7 +107,7 @@
 // });
 
 // Start server and connect to MongoDB
-// const PORT = process.env.PORT || 5000;
+// const PORT = process.env.PORT;
 
 // const start = async () => {
 //   try {
@@ -248,7 +248,7 @@ io.on('connection', (socket) => {
 });
 
 // Start server and connect to MongoDB
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT;
 
 const start = async () => {
   try {
