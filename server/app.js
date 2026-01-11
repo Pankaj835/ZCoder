@@ -156,14 +156,28 @@ const ACTIONS = require('./Actions');
 const app = express();
 
 // CORS Middleware
-const CLIENT_ORIGIN = process.env.CLIENT_URL || 'http://localhost:5173';
+const allowedOrigins = [
+  'http://localhost:5173',
+  'https://zcoder-nu.vercel.app',
+];
+
 app.use(cors({
-  origin: CLIENT_ORIGIN,
+  origin: function (origin, callback) {
+    if (!origin) return callback(null, true);
+
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    } else {
+      return callback(new Error('Not allowed by CORS'));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
 }));
+
 app.options('*', cors());
+
 
 // JSON Body Parser
 app.use(express.json());
