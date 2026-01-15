@@ -237,18 +237,21 @@ const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
+      // Allow websocket upgrade without origin
       if (!origin) return callback(null, true);
 
       if (isAllowedOrigin(origin)) {
-        return callback(null, true);
+        return callback(null, origin);
       }
 
-      return callback(new Error('Not allowed by CORS'));
+      // Always return an origin string, never false
+      return callback(null, allowedOrigins[0]);
     },
     credentials: true,
     methods: ['GET', 'POST'],
   },
 });
+
 
 
 const userSocketMap = {};
