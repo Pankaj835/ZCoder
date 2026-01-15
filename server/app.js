@@ -161,22 +161,47 @@ const allowedOrigins = [
   'https://zcoder-nu.vercel.app',
 ];
 
-app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin) return callback(null, true);
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true; // Postman, server-to-server
 
-    if (allowedOrigins.includes(origin)) {
-      return callback(null, true);
-    } else {
-      return callback(new Error('Not allowed by CORS'));
-    }
-  },
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
-}));
+  if (allowedOrigins.includes(origin)) return true;
 
-app.options('*', cors());
+  // allow ALL Vercel preview deployments
+  if (origin.endsWith('.vercel.app')) return true;
+
+  return false;
+};
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  })
+);
+
+
+app.options(
+  '*',
+  cors({
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error('Not allowed by CORS'));
+      }
+    },
+    credentials: true,
+  })
+);
+
 
 
 // JSON Body Parser
@@ -211,10 +236,20 @@ const server = http.createServer(app);
 // Setup Socket.IO server
 const io = new Server(server, {
   cors: {
-    origin: CLIENT_ORIGIN,
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+
+      if (isAllowedOrigin(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
     methods: ['GET', 'POST'],
   },
 });
+
 
 const userSocketMap = {};
 
@@ -262,7 +297,7 @@ io.on('connection', (socket) => {
 });
 
 // Start server and connect to MongoDB
-const PORT = process.env.PORT;
+const PORT = process.env.PORT || 5000;
 
 const start = async () => {
   try {
